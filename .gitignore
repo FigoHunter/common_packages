@@ -1,0 +1,8 @@
+envs/
+temp/
+.vscode/*
+.conda/*
+.env
+*.pyc
+*.ipynb_checkpoints
+*.egg-info
