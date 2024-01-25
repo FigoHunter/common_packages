@@ -1,0 +1,16 @@
+[submodule "packages/blender_figo"]
+	path = packages/blender_figo
+	url = git@github.com:FigoHunter/common_packages.git
+	branch = packages/blender_figo
+[submodule "packages/figo_common"]
+	path = packages/figo_common
+	url = git@github.com:FigoHunter/common_packages.git
+	branch = packages/figo_common
+[submodule "packages/houdini_figo"]
+	path = packages/houdini_figo
+	url = git@github.com:FigoHunter/common_packages.git
+	branch = packages/houdini_figo
+[submodule "packages/mujoco_figo"]
+	path = packages/mujoco_figo
+	url = git@github.com:FigoHunter/common_packages.git
+	branch = packages/mujoco_figo
