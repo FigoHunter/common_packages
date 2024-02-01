@@ -1,5 +1,4 @@
 import numpy as np
-import transformations
 from scipy.spatial.transform import Rotation
 
 def getAffineMat(matrix:np.ndarray) -> np.ndarray:
@@ -21,6 +20,7 @@ def getAffineMatFromTranslArray(v:np.ndarray) -> np.ndarray:
     return getAffineMatFromTransl(v[0],v[1],v[2])
 
 def decomposeTrs(mat):
+    import transformations
     scale, shear, angles, transl, persp = transformations.decompose_matrix(mat)
     quat = transformations.quaternion_from_euler(*angles)
     quat = np.array([quat[1],quat[2],quat[3],quat[0]])
@@ -33,5 +33,6 @@ def getAffineMatFromEuler(euler, order='xyz', degree=False):
     return getAffineMat(Rotation.from_euler(order,euler,degree).as_matrix())
 
 def getQuaternionFromMatrix(mat):
+    import transformations
     quat= transformations.quaternion_from_matrix(mat,True)
     return np.array([quat[1],quat[2],quat[3],quat[0]])
