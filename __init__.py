@@ -34,8 +34,11 @@ def save_np(path, data):
     os.makedirs(os.path.dirname(path),exist_ok=True)
     np.save(path, data)
 
-def load_pkl(path):
+def load_pkl(path, default = None):
     import pickle
+    import os
+    if not os.path.exists(path):
+        return default
     with open(path,'rb') as f:
         data = pickle.load(f)
     return data
