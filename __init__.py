@@ -3,4 +3,6 @@ from . import file
 from . import module
 from . import path
 from . import cache
-from ._base import *
+def get_uuid():
+    import uuid
+    return uuid.uuid4().hex.replace('-','')
