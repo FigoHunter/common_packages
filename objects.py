@@ -15,8 +15,11 @@ class TYPE:
     SPEAKER='SPEAKER'
     LIGHT_PROBE='LIGHT_PROBE'
 
-def findObjs(name=None, type=None):
-    objs=bpy.data.objects
+def findObjs(name=None, type=None, collection = None):
+    if collection is None:
+        objs=bpy.data.objects
+    else:
+        objs=collection.objects
     ls=[]
     for o in objs:
         match=True

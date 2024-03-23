@@ -1,3 +1,5 @@
+from typing import Literal
+
 def createTmpFile(path, content=""):
     import os
     path = os.path.abspath(path)
@@ -56,3 +58,20 @@ def openFile(filePath, postAction=None):
             postAction()
     bpy.app.handlers.load_post.append(__postAction)
     bpy.ops.wm.open_mainfile(filepath=filePath)
+
+def saveFile(filePath=None):
+    import bpy
+    import os
+    if filePath is None:
+        bpy.ops.wm.save_mainfile()
+    else:
+        os.makedirs(os.path.dirname(filePath), exist_ok=True)
+        bpy.ops.wm.save_as_mainfile(filepath=filePath)
+
+def appendFile(filePath, contentPath):
+    import bpy
+    import os
+    fullpath = os.path.abspath(os.path.join(filePath, contentPath))
+    filename = os.path.basename(fullpath)
+    directory = os.path.dirname(fullpath)
+    bpy.ops.wm.append(filename=filename, directory=directory)

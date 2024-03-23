@@ -42,7 +42,7 @@ def __startProcessThread(q,index):
         print(f"[THREAD-{index}] Done")
 
 
-def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=1):
+def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=1, args={}):
     index=0
     pid=os.getpid()
     for i in range(process_count):
@@ -57,8 +57,11 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
                 f"set PARENT_PID={str(pid)}\n"+\
                 f"set WORKSPACE_HOME={workspace_home}\n"+\
                 r"set PYTHONPATH=%PYTHONPATH%;%WORKSPACE_HOME%\packages;%WORKSPACE_HOME%\startup"+"\n"+\
-                r"set BLENDER_SYSTEM_SCRIPTS=%WORKSPACE_HOME%\startup;%BLENDER_SYSTEM_SCRIPTS%"+"\n"+\
-                f"blender.exe --background --log-level -1 --python {script_path}"
+                r"set BLENDER_SYSTEM_SCRIPTS=%WORKSPACE_HOME%\startup;%BLENDER_SYSTEM_SCRIPTS%"+"\n"
+            for k, v in args.items():
+                assert isinstance(k,str) and isinstance(v,str)
+                cmd = cmd + f"set BLENDER_ARGS_{k}={v}\n"
+            cmd = cmd + f"blender.exe --background --log-level -1 --python {script_path}"
             t=time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time()))
             tempFile=os.path.join(workspace_home,"temp",f"{t}---{index}.bat")
         elif platform.system().lower() == 'linux':
@@ -67,8 +70,11 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
                 f"export PARENT_PID={str(pid)}\n"+\
                 f"export WORKSPACE_HOME={workspace_home}\n"+\
                 "export PYTHONPATH=${PYTHONPATH}:${WORKSPACE_HOME}/packages:${WORKSPACE_HOME}/startup\n"+\
-                "export BLENDER_SYSTEM_SCRIPTS=${WORKSPACE_HOME}/startup:${BLENDER_SYSTEM_SCRIPTS}\n"+\
-                f"blender --background --log-level -1 --python {script_path}"
+                "export BLENDER_SYSTEM_SCRIPTS=${WORKSPACE_HOME}/startup:${BLENDER_SYSTEM_SCRIPTS}\n"
+            for k, v in args.items():
+                assert isinstance(k,str) and isinstance(v,str)
+                cmd = cmd + f"export BLENDER_ARGS_{k}={v}\n"
+            cmd = cmd + f"blender --background --log-level -1 --python {script_path}"
             t=time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time()))
             tempFile=os.path.join(workspace_home,"temp",f"{t}---{index}.sh")
         else:
@@ -83,6 +89,17 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
         fileQ.put("end")
     
     fileQ.join()
+
+def acquireFileList():
+    return environ.getEnvVarAsList('ROSITA_OBJS')
+
+def acquireArgs():
+    args={}
+    for k,v in os.environ.items():
+        if k.startswith("BLENDER_ARGS_"):
+            args[k[13:]]=v
+    return args
+
 
 def __kill():
     if platform.system().lower() == 'windows':
@@ -100,6 +117,7 @@ def __checkParentProcess(pid):
             __kill()
         time.sleep(2)
     
-def startSelfSupervising(ppid):
+def startSelfSupervising():
+    ppid = int(os.environ.get("PARENT_PID"))
     t=threading.Thread(None,__checkParentProcess,"CheckParentProcess",(ppid,),daemon=True)
     t.start()

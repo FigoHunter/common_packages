@@ -1,6 +1,9 @@
 import os
 import platform
 from typing import List
+from figo_common import module
+
+RUN_IN_BLENDER = module.module_exists('bpy')
 
 def getEnvVar(key:str):
     return os.environ.get(key,"")

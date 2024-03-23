@@ -2,8 +2,9 @@ import bpy
 from .errors import MeshError
 from . import material,utils
 import numpy as np
+from mathutils import Vector
 
-def createMesh(name,*, vertices, faces=[], edges=[],matrix=None, mat = None, collection=None):
+def createMesh(name,*, vertices, faces=[], edges=[],matrix=None, mat = None, collection=None, smooth = True):
 
     vertices = utils.ndarray_pydata.parse(vertices)
     if len(faces)>0:
@@ -17,6 +18,8 @@ def createMesh(name,*, vertices, faces=[], edges=[],matrix=None, mat = None, col
         mesh.from_pydata(vertices, edges, faces)
         mesh.validate()
 
+    if smooth:
+        smoothMesh(mesh)
 
     # 创建对象
     obj = bpy.data.objects.new(name, mesh)
@@ -35,3 +38,12 @@ def createMesh(name,*, vertices, faces=[], edges=[],matrix=None, mat = None, col
     bpy.ops.object.shade_smooth()
     bpy.ops.object.select_all(action='DESELECT')
     return obj
+
+def smoothMesh(mesh):
+    for poly in mesh.polygons:
+        poly.use_smooth = True
+
+def getBboxCenter(obj):
+    local_bbox_center = 0.125 * sum((Vector(b) for b in obj.bound_box), Vector())
+    global_bbox_center = obj.matrix_world @ local_bbox_center
+    return global_bbox_center
