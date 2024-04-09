@@ -14,3 +14,6 @@
 	path = packages/mujoco_figo
 	url = git@github.com:FigoHunter/common_packages.git
 	branch = packages/mujoco_figo
+[submodule "packages/smplx_figo"]
+	path = packages/smplx_figo
+	url = git@github.com:FigoHunter/common_packages.git
