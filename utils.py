@@ -23,3 +23,12 @@ def getAffineMatFromTransl(x,y,z) -> np.ndarray:
 
 def getAffineMatFromTranslArray(v:np.ndarray) -> np.ndarray:
     return getAffineMatFromTransl(v[0],v[1],v[2])
+
+def getBlenderMatrix4x4(matrix_3x3):
+    from mathutils import Matrix
+
+    matrix_4x4 = Matrix.Identity(4)
+    for i in range(3):
+        for j in range(3):
+            matrix_4x4[i][j] = matrix_3x3[i][j]
+    return matrix_4x4
