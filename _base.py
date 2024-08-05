@@ -43,3 +43,8 @@ def save_pkl(path, data):
     os.makedirs(os.path.dirname(path),exist_ok=True)
     with open(path,'wb') as f:
         pickle.dump(data, f)
+
+def require(var, msg = None):
+    if var is None:
+        raise Exception(msg or 'Variable is required but not provided.')
+    return var

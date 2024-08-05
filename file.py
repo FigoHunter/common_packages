@@ -30,3 +30,15 @@ def copyTo(from_path, to_path, overwrite=False):
             raise Exception(f'File exists: {to_path}')
     import shutil
     shutil.copy(from_path, to_path)
+
+def sort_file_list(files, reverse=False):
+    import re
+    regex = r'(?<=_)\d+$'
+    def extract_key(x):
+        x = os.path.splitext(os.path.basename(x))[0]
+        found = re.findall(regex, x)
+        if found:
+            return int(found[0])
+        raise Exception(f'Cannot extract number from {x}')
+    files.sort(key=extract_key, reverse=reverse)
+    return [(extract_key(x), x) for x in files]
