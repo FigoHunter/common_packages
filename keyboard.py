@@ -1,7 +1,7 @@
 from enum import Enum
 from threading import Lock
 from pynput import keyboard
-from ._base import Action
+from .action import Action
 from threading import Thread, Event
 from queue import Queue
 
@@ -383,3 +383,9 @@ def get_keys(keys):
         if keys & key:
             list.append(key)
     return list
+
+class Operation(Enum):
+    def get_key(self):
+        raise NotImplementedError
+    def get_event(self):
+        raise NotImplementedError
