@@ -31,14 +31,15 @@ def copyTo(from_path, to_path, overwrite=False):
     import shutil
     shutil.copy(from_path, to_path)
 
-def sort_file_list(files, reverse=False):
+def extract_file_key(filename):
     import re
-    regex = r'(?<=_)\d+$'
-    def extract_key(x):
-        x = os.path.splitext(os.path.basename(x))[0]
-        found = re.findall(regex, x)
-        if found:
-            return int(found[0])
-        raise Exception(f'Cannot extract number from {x}')
-    files.sort(key=extract_key, reverse=reverse)
-    return [(extract_key(x), x) for x in files]
+    regex = r'\d+$'
+    x = os.path.splitext(os.path.basename(filename))[0]
+    found = re.findall(regex, x)
+    if found:
+        return int(found[0])
+    raise Exception(f'Cannot extract number from {x}')
+
+def sort_file_list(files, reverse=False):
+    files.sort(key=extract_file_key, reverse=reverse)
+    return files
