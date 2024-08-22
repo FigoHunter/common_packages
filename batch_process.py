@@ -56,8 +56,8 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
                 "@echo off\n"+\
                 f"set PARENT_PID={str(pid)}\n"+\
                 f"set WORKSPACE_HOME={workspace_home}\n"+\
-                r"set PYTHONPATH=%PYTHONPATH%;%WORKSPACE_HOME%\packages;%WORKSPACE_HOME%\startup"+"\n"+\
-                r"set BLENDER_SYSTEM_SCRIPTS=%WORKSPACE_HOME%\startup;%BLENDER_SYSTEM_SCRIPTS%"+"\n"
+                r"set PYTHONPATH=%PYTHONPATH%;%WORKSPACE_HOME%\packages;%WORKSPACE_HOME%\blender_startup"+"\n"+\
+                r"set BLENDER_SYSTEM_SCRIPTS=%WORKSPACE_HOME%\blender_startup;%BLENDER_SYSTEM_SCRIPTS%"+"\n"
             for k, v in args.items():
                 assert isinstance(k,str) and isinstance(v,str)
                 cmd = cmd + f"set BLENDER_ARGS_{k}={v}\n"
@@ -69,8 +69,8 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
                 "#!/bin/bash\n"+\
                 f"export PARENT_PID={str(pid)}\n"+\
                 f"export WORKSPACE_HOME={workspace_home}\n"+\
-                "export PYTHONPATH=${PYTHONPATH}:${WORKSPACE_HOME}/packages:${WORKSPACE_HOME}/startup\n"+\
-                "export BLENDER_SYSTEM_SCRIPTS=${WORKSPACE_HOME}/startup:${BLENDER_SYSTEM_SCRIPTS}\n"
+                "export PYTHONPATH=${PYTHONPATH}:${WORKSPACE_HOME}/packages:${WORKSPACE_HOME}/blender_startup\n"+\
+                "export BLENDER_SYSTEM_SCRIPTS=${WORKSPACE_HOME}/blender_startup:${BLENDER_SYSTEM_SCRIPTS}\n"
             for k, v in args.items():
                 assert isinstance(k,str) and isinstance(v,str)
                 cmd = cmd + f"export BLENDER_ARGS_{k}={v}\n"
