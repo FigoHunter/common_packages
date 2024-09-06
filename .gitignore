@@ -2,3 +2,4 @@ temp/*
 *.pyc
 .conda/*
 .env
+common_packages.egg-info/
