@@ -2,13 +2,13 @@ import os
 import platform
 from typing import List
 
-def getEnvVar(key:str):
-    return os.environ.get(key,"")
+def getEnvVar(key:str, default=''):
+    return os.environ.get(key,default)
 
 def getEnvVarAsList(key:str):
     value = getEnvVar(key)
     if not value:
-        return [value]
+        return []
     if platform.system().lower() == 'windows':
         return value.split(";")
     elif platform.system().lower() == 'linux':
