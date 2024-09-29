@@ -84,6 +84,16 @@ FINGER_JOINT_PARENT={
     'thumb3':'thumb2',
 }
 
+def get_joint_idx(joint_name):
+    if joint_name in BODY_JOINT_NAMES:
+        return BODY_JOINT_NAMES.index(joint_name)
+    elif joint_name in FINGER_JOINT_NAMES:
+        return FINGER_JOINT_NAMES.index(joint_name)
+    elif joint_name == 'root':
+        return -1
+    else:
+        raise ValueError('Unknown joint name: {}'.format(joint_name))
+
 def mirror_rot(rotvec):
     # 镜像轴角 x 轴，实现轴的左右镜像 [-x,y,z]
     # 再xyz全部取反，实现旋转方向的镜像 [x,-y,-z]
