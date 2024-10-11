@@ -26,6 +26,9 @@ BODY_JOINT_NAMES = [
     'left_wrist',
     'right_wrist',
 ]
+
+
+
 BODY_JOINT_PARENT={
     'left_hip':'root',
     'right_hip': 'root',
@@ -82,6 +85,57 @@ FINGER_JOINT_PARENT={
     'thumb1':'root',
     'thumb2':'thumb1',
     'thumb3':'thumb2',
+}
+
+SMPL_BODY_JOINT_NAMES = [
+    'left_hip',
+    'right_hip',
+    'spine1',
+    'left_knee',
+    'right_knee',
+    'spine2',
+    'left_ankle',
+    'right_ankle',
+    'spine3',
+    'left_foot',
+    'right_foot',
+    'neck',
+    'left_collar',
+    'right_collar',
+    'head',
+    'left_shoulder',
+    'right_shoulder',
+    'left_elbow',
+    'right_elbow',
+    'left_wrist',
+    'right_wrist',
+    'left_hand',
+    'right_hand',
+]
+SMPL_BODY_JOINT_PARENT={
+    'left_hip':'root',
+    'right_hip':'root',
+    'spine1':'root',
+    'left_knee':'left_hip',
+    'right_knee':'right_hip',
+    'spine2':'spine1',
+    'left_ankle':'left_knee',
+    'right_ankle':'right_knee',
+    'spine3':'spine2',
+    'left_foot':'left_ankle',
+    'right_foot':'right_ankle',
+    'neck':'spine3',
+    'left_collar':'spine3',
+    'right_collar':'spine3',
+    'head':'neck',
+    'left_shoulder':'left_collar',
+    'right_shoulder':'right_collar',
+    'left_elbow':'left_shoulder',
+    'right_elbow':'right_shoulder',
+    'left_wrist':'left_elbow',
+    'right_wrist':'right_elbow',
+    'left_hand':'left_wrist',
+    'right_hand':'right_wrist',
 }
 
 def get_joint_idx(joint_name):
@@ -152,3 +206,41 @@ def mirror_full_pose(smplx_pose):
     left_hand_pose[:]=mir_left_hand_pose[:]
     right_hand_pose[:]=mir_right_hand_pose[:]
     smplx_pose['right_hand_pose'][0][:,:]=right_hand_pose.reshape([15,3])[:,:]
+
+def get_smpl_joint_idx(joint_name):
+    if joint_name in SMPL_BODY_JOINT_NAMES:
+        return SMPL_BODY_JOINT_NAMES.index(joint_name)
+    elif joint_name == 'root':
+        return -1
+    else:
+        raise ValueError('Unknown joint name: {}'.format(joint_name))
+    
+def mirror_smpl_pose(smpl_pose):
+    # 镜像根位置
+    global_pos = smpl_pose['transl'][0]
+    global_pos[:] = torch.tensor([-global_pos[0],global_pos[1],global_pos[2]])
+
+    # 镜像根旋转
+    global_rot = smpl_pose['global_orient'][0]
+    global_rot[:] = torch.tensor(mirror_rot(global_rot))
+    # 镜像身体姿态
+    body_pose=smpl_pose['body_pose'][0]
+    mir_body_pose = copy.deepcopy(body_pose)
+
+    for i, name in enumerate(SMPL_BODY_JOINT_NAMES):
+        if name.startswith('left'):
+            mir_name = get_mirrored_joint(name)
+            mir_idx = SMPL_BODY_JOINT_NAMES.index(mir_name)
+            # 获取对称关节的原始旋转
+            mir_rot = body_pose[mir_idx*3:(mir_idx+1)*3]
+            # 镜像对称关节旋转
+            mir_body_pose[i*3:(i+1)*3] = torch.tensor(mirror_rot(mir_rot))
+        elif name.startswith('right'):
+            mir_name = get_mirrored_joint(name)
+            mir_idx = SMPL_BODY_JOINT_NAMES.index(mir_name)
+            mir_rot = body_pose[mir_idx*3:(mir_idx+1)*3]
+            mir_body_pose[i*3:(i+1)*3] = torch.tensor(mirror_rot(mir_rot))
+        else:
+            # 镜像非对称关节旋转
+            mir_body_pose[i*3:(i+1)*3] = torch.tensor(mirror_rot(body_pose[i*3:(i+1)*3]))
+    body_pose[:]=mir_body_pose[:]
