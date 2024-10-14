@@ -1,6 +1,8 @@
 import importlib
 import importlib.util
 import sys
+from importlib import resources
+
 
 def module_exists(module_name):
     try:
@@ -18,3 +20,17 @@ def runtime_import(path):
     sys.modules[module_name] = foo
     spec.loader.exec_module(foo)
     return foo
+
+def open_resource_txt(package, resource):
+    nodes = resource.split('/')
+    package = '.'.join([package, *nodes[:-1]])
+    resource = nodes[-1]
+    print(package, resource)
+    return resources.open_text(package, resource)
+
+def open_resource_bytes(package, resource):
+    nodes = resource.split('/')
+    package = '.'.join([package, *nodes[:-1]])
+    resource = nodes[-1]
+    print(package, resource)
+    return resources.open_binary(package, resource)
