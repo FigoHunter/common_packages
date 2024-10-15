@@ -1,13 +1,12 @@
-
-class VariantManager:
+class FuncVariant:
     def __init__(self):
-        self._version_map = {}
+        self._variant_map = {}
 
-    def variant(self, variant):
+    def variant(self, variant_name):
         def decorator(func):
-            self._version_map[variant] = func
+            self._variant_map[variant_name] = func
             return func
         return decorator
 
-    def get_variant(self, variant):
-        return self._version_map.get(variant, None)
+    def get_func(self, variant_name):
+        return self._variant_map.get(variant_name, None)
