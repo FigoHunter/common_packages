@@ -2,6 +2,9 @@ from typing import Optional
 import numpy as np
 from typing import List as list
 
+def dot(a: np.ndarray, b: np.ndarray, axis = -1, keepdims = True) -> np.ndarray:
+    return np.sum(a * b, axis=axis, keepdims=keepdims)
+
 def copysign_np(a: np.ndarray, b: np.ndarray) -> np.ndarray:
     """
     Return a ndarray where each element has the absolute value taken from the,
