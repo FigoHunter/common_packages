@@ -15,6 +15,3 @@ def getPoseBones(object):
 
 def getPoseBone(object, name):
     return getPoseBones(object).get(name)
-
-
-        
