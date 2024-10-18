@@ -46,3 +46,13 @@ def createEmpty(name=None, collection=None):
         from .collection import moveCollection
         moveCollection(obj, collection) 
     return obj
+
+def createSphere(name=None, radius=1, location=(0,0,0), collection=None):
+    bpy.ops.mesh.primitive_uv_sphere_add(radius=radius, location=location)
+    obj=bpy.context.object
+    if name:
+        obj.name=name
+    if collection:
+        from .collection import moveCollection
+        moveCollection(obj, collection) 
+    return obj

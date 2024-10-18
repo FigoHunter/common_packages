@@ -93,12 +93,16 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
 def acquireFileList():
     return environ.getEnvVarAsList('PROCESS_FILE_LIST')
 
-def acquireArgs():
-    args={}
-    for k,v in os.environ.items():
-        if k.startswith("BLENDER_ARGS_"):
-            args[k[13:]]=v
-    return args
+# def acquireArgs():
+#     args={}
+#     for k,v in os.environ.items():
+#         if k.startswith("BLENDER_ARGS_"):
+#             args[k[13:]]=v
+#     return args
+
+def acquireArg(key, default = None):
+    key = key.capitalize()
+    return os.environ.get(f"BLENDER_ARGS_{key}", default)
 
 
 def __kill():
@@ -118,6 +122,10 @@ def __checkParentProcess(pid):
         time.sleep(2)
     
 def startSelfSupervising():
-    ppid = int(os.environ.get("PARENT_PID"))
+    ppid = os.environ.get("PARENT_PID")
+    if ppid is None:
+        print("Parent Process Not Found")
+        return
+    ppid = int(ppid)
     t=threading.Thread(None,__checkParentProcess,"CheckParentProcess",(ppid,),daemon=True)
     t.start()

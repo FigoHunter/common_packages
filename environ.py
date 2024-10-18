@@ -11,7 +11,7 @@ def getEnvVar(key:str):
 def getEnvVarAsList(key:str):
     value = getEnvVar(key)
     if not value:
-        return [value]
+        return []
     if platform.system().lower() == 'windows':
         return value.split(";")
     elif platform.system().lower() == 'linux':

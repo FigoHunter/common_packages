@@ -31,7 +31,7 @@ def exportFile(path, **kwargs):
     else:
         raise Exception(f"文件格式未支持：{path}")
     
-def newFile(postAction=None):
+def newFile(postAction=None, args=()):
     import bpy
 
     @bpy.app.handlers.persistent
@@ -44,7 +44,7 @@ def newFile(postAction=None):
         for o in ls:
             objs.remove(o, do_unlink=True)
         if postAction is not None:
-            postAction()
+            postAction(args)
     bpy.app.handlers.load_post.append(deleteCube)
     bpy.ops.wm.read_homefile()
     
