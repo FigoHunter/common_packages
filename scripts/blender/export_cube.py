@@ -1,4 +1,5 @@
-from figo_common import module, environ
+from figo_common import module
+from blender_figo import environ as benviron
 import figo_common
 import random
 import os
@@ -6,7 +7,7 @@ import numpy as np
 
 
 # Run In Blender
-if module.module_exists("bpy"):
+if benviron.RUN_IN_BLENDER:
     from blender_figo import objects as bobjects
     from blender_figo import file as bfile
     from blender_figo import batch_process
