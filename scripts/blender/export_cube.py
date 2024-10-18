@@ -23,7 +23,7 @@ if module.module_exists("bpy"):
         else:
             size = np.random.rand(1) * 10
             basename = 'random'
-        sphere = bobjects.createSphere(radius=1)
+        sphere = bobjects.create_sphere(radius=1)
         sphere.scale = (size, size, size)
         bpy.context.view_layer.update()
         matrix = np.array(sphere.matrix_world)
