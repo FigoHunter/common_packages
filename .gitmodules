@@ -1,0 +1,8 @@
+[submodule "packages/blender_figo"]
+	path = packages/blender_figo
+	url = https://github.com/FigoHunter/common_packages.git
+	branch = packages/blender_figo
+[submodule "packages/figo_common"]
+	path = packages/figo_common
+	url = https://github.com/FigoHunter/common_packages.git
+	branch = packages/figo_common
