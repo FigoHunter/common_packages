@@ -222,6 +222,34 @@ def rotvec_to_rotmat_np(rotvec: np.ndarray) -> np.ndarray:
     """
     return quat_to_rotmat_np(rotvec_to_quat_np(rotvec))
 
+def rotvec_to_euler(rotvec: np.ndarray, convention: str) -> np.ndarray:
+    """
+    Convert rotations given as axis/angle to Euler angles in radians.
+    Args:
+        rotvec: Rotations given as a vector in axis angle form,
+            as a tensor of shape (..., 3), where the magnitude is
+            the angle turned anticlockwise in radians around the
+            vector's direction.
+        convention: Convention string of three uppercase letters.
+    Returns:
+        Euler angles in radians as tensor of shape (..., 3).
+    """
+    return quat_to_euler_angle_np(rotvec_to_quat_np(rotvec), convention)
+
+def euler_to_rotvec(euler: np.ndarray, convention: str) -> np.ndarray:
+    """
+    Convert rotations given as Euler angles in radians to axis/angle.
+    Args:
+        euler: Euler angles in radians as tensor of shape (..., 3).
+        convention: Convention string of three uppercase letters from
+            {"X", "Y", and "Z"}.
+    Returns:
+        Rotations given as a vector in axis angle form, as a tensor
+            of shape (..., 3), where the magnitude is the angle
+            turned anticlockwise in radians around the vector's
+            direction
+    """
+    return quat_to_rotvec_np(euler_angle_to_quat_np(euler, convention))
 
 def rotmat_to_rotvec_np(rotmat: np.ndarray) -> np.ndarray:
     """

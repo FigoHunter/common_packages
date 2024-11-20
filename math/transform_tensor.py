@@ -299,16 +299,24 @@ def rotvec_to_quat(rotvec: torch.Tensor) -> torch.Tensor:
     Returns:
         quaternions with real part first, as tensor of shape (..., 4).
     """
-    angles = torch.norm(rotvec, p=2, dim=-1, keepdim=True)
-    half_angles = angles * 0.5
-    eps = 1e-6
-    small_angles = angles.abs() < eps
-    sin_half_angles_over_angles = torch.empty_like(angles)
-    sin_half_angles_over_angles[~small_angles] = torch.sin(half_angles[~small_angles]) / angles[~small_angles]
-    # for x small, sin(x/2) is about x/2 - (x/2)^3/6
-    # so sin(x/2)/x is about 1/2 - (x*x)/48
-    sin_half_angles_over_angles[small_angles] = 0.5 - (angles[small_angles] * angles[small_angles]) / 48
-    quat = torch.cat([torch.cos(half_angles), rotvec * sin_half_angles_over_angles], dim=-1)
+    angles = torch.norm(rotvec, p=2, dim=-1, keepdim=True)  # (..., 1)
+    half_angles = angles * 0.5  # (..., 1)
+    eps = 1e-8
+    small_angles = angles.abs() < eps  # (..., 1),
+    sin_half_angles_over_angles = torch.where(
+        small_angles,
+        0.5 - (angles * angles) / 48.0 + (angles ** 4) / 3840.0,
+        torch.sin(half_angles) / (angles + eps)  # 
+    )  # (..., 1)
+
+    quat_real = torch.cos(half_angles)  # (..., 1)
+    quat_imag = rotvec * sin_half_angles_over_angles  # (..., 3)
+    quat = torch.cat([quat_real, quat_imag], dim=-1)  # (..., 4)
+    quat = torch.where(
+        small_angles.expand_as(quat),
+        torch.cat([torch.ones_like(quat_real), torch.zeros_like(quat_imag)], dim=-1),
+        quat
+    )
     return quat
 
 
@@ -324,18 +332,18 @@ def quat_to_rotvec(quat: torch.Tensor) -> torch.Tensor:
             turned anticlockwise in radians around the vector's
             direction.
     """
-    norms = torch.norm(quat[..., 1:], p=2, dim=-1, keepdim=True)
-    half_angles = torch.atan2(norms, quat[..., :1])
-    angles = 2 * half_angles
-    eps = 1e-6
-    small_angles = angles.abs() < eps
-    sin_half_angles_over_angles = torch.empty_like(angles)
-    sin_half_angles_over_angles[~small_angles] = torch.sin(half_angles[~small_angles]) / angles[~small_angles]
-    # for x small, sin(x/2) is about x/2 - (x/2)^3/6
-    # so sin(x/2)/x is about 1/2 - (x*x)/48
-    sin_half_angles_over_angles[small_angles] = 0.5 - (angles[small_angles] * angles[small_angles]) / 48
-    return quat[..., 1:] / sin_half_angles_over_angles
-
+    quat = quat / (torch.norm(quat, p=2, dim=-1, keepdim=True) + 1e-8)
+    w = quat[..., 0:1]  # (..., 1)
+    xyz = quat[..., 1:]  # (..., 3)
+    theta = 2.0 * torch.acos(w.clamp(-1.0, 1.0))  # (..., 1)
+    sin_theta_over2 = torch.sqrt(1.0 - w**2 + 1e-8)  # (..., 1)
+    eps = 1e-8
+    sin_theta_over2 = torch.where(sin_theta_over2 < eps, torch.ones_like(sin_theta_over2), sin_theta_over2)
+    axis = xyz / sin_theta_over2  # (..., 3)
+    axis = torch.where(sin_theta_over2 > eps, axis, torch.zeros_like(axis))
+    rotvec = axis * theta  # (..., 3)
+    rotvec = torch.where(theta > eps, rotvec, torch.zeros_like(rotvec))
+    return rotvec
 
 def _axis_angle_rotation(axis: str, angle: torch.Tensor) -> torch.Tensor:
     """
@@ -488,3 +496,84 @@ def quat_to_euler_angle(quat: torch.Tensor, convention: str) -> torch.Tensor:
         Euler angles in radians as tensor of shape (..., 3).
     """
     return rotmat_to_euler_angle(quat_to_rotmat(quat), convention)
+
+def transf_to_se3(transf: torch.Tensor) -> torch.Tensor:
+    """
+    Convert a transformation matrix to an SE3.
+    Args:
+        transf: tensor of shape (..., 4, 4).
+    Returns:
+        se3: tensor of shape (..., 6).
+    """
+    rotmat = transf[..., :3, :3]
+    rotvec = rotmat_to_rotvec(rotmat)
+    return torch.cat((transf[..., :3, 3], rotvec), -1)
+
+def se3_to_transf(se3: torch.Tensor) -> torch.Tensor:
+    """
+    Convert an SE3 to a transformation matrix.
+    Args:
+        se3: tensor of shape (..., 6).
+    Returns:
+        transf: tensor of shape (..., 4, 4).
+    """
+    rotvec = se3[..., 3:]
+    rotmat = rotvec_to_rotmat(rotvec)
+    return assemble_T(se3[..., :3], rotmat)
+
+def compute_swing_rotation(v1, v2, eps=1e-8):
+    v1_norm = v1 / (torch.norm(v1) + eps)
+    v2_norm = v2 / (torch.norm(v2) + eps)
+    rot_axis = torch.cross(v1_norm, v2_norm)
+    axis_norm = torch.norm(rot_axis)
+
+    if axis_norm < eps:
+        dot_product = torch.dot(v1_norm, v2_norm)
+        if dot_product > 0:
+            swing_matrix = torch.eye(3, device=v1.device, dtype=v1.dtype)
+        else:
+            abs_v1_norm = torch.abs(v1_norm)
+            if abs_v1_norm[0] < abs_v1_norm[1]:
+                temp_axis = torch.tensor([1.0, 0.0, 0.0], device=v1.device, dtype=v1.dtype)
+            else:
+                temp_axis = torch.tensor([0.0, 1.0, 0.0], device=v1.device, dtype=v1.dtype)
+            rot_axis = torch.cross(v1_norm, temp_axis)
+            rot_axis = rot_axis / (torch.norm(rot_axis) + eps)
+            swing_matrix = rotation_matrix_axis_angle(rot_axis, torch.pi)
+    else:
+        rot_axis = rot_axis / (axis_norm + eps)
+        cos_theta = torch.dot(v1_norm, v2_norm)
+        cos_theta = torch.clamp(cos_theta, -1.0, 1.0)
+        theta = torch.acos(cos_theta)
+        swing_matrix = rotation_matrix_axis_angle(rot_axis, theta)
+
+    return swing_matrix
+
+def rotation_matrix_axis_angle(axis, angle):
+
+    axis = axis / (torch.norm(axis) + 1e-8)
+    x, y, z = axis[0], axis[1], axis[2]
+
+    c = torch.cos(angle)
+    s = torch.sin(angle)
+    C = 1 - c
+
+    m00 = c + x * x * C
+    m01 = x * y * C - z * s
+    m02 = x * z * C + y * s
+
+    m10 = y * x * C + z * s
+    m11 = c + y * y * C
+    m12 = y * z * C - x * s
+
+    m20 = z * x * C - y * s
+    m21 = z * y * C + x * s
+    m22 = c + z * z * C
+
+    rotation_matrix = torch.stack([
+        torch.stack([m00, m01, m02]),
+        torch.stack([m10, m11, m12]),
+        torch.stack([m20, m21, m22])
+    ])
+
+    return rotation_matrix

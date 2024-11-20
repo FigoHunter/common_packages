@@ -40,6 +40,6 @@ def extract_file_key(filename):
         return int(found[0])
     raise Exception(f'Cannot extract number from {x}')
 
-def sort_file_list(files, reverse=False):
+def sort_file_list(files: list, reverse=False):
     files.sort(key=extract_file_key, reverse=reverse)
     return files
