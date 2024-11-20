@@ -19,6 +19,10 @@ def findObjs(name=None, type=None, collection = None):
     if collection is None:
         objs=bpy.data.objects
     else:
+        if isinstance(collection, str):
+            collection = bpy.data.collections.get(collection, None)
+        if collection is None:
+            return []
         objs=collection.objects
     ls=[]
     for o in objs:
