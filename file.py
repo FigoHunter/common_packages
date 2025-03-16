@@ -1,4 +1,4 @@
-from typing import Literal
+# from typing import Literal
 
 def createTmpFile(path, content=""):
     import os
@@ -17,6 +17,8 @@ def importFile(path, **kwargs):
         bpy.ops.import_scene.obj(filepath=path, **kwargs)
     elif path.endswith(".ply"):
         bpy.ops.import_mesh.ply(filepath=path, **kwargs)
+    elif path.endswith(".bvh"):
+        bpy.ops.import_anim.bvh(filepath=path, **kwargs)
     else:
         raise Exception(f"文件格式未支持：{path}")
     
@@ -31,7 +33,7 @@ def exportFile(path, **kwargs):
     else:
         raise Exception(f"文件格式未支持：{path}")
     
-def newFile(postAction=None, args=()):
+def newFile(postAction=None, args=(), kwargs={}):
     import bpy
 
     @bpy.app.handlers.persistent
@@ -44,7 +46,7 @@ def newFile(postAction=None, args=()):
         for o in ls:
             objs.remove(o, do_unlink=True)
         if postAction is not None:
-            postAction(args)
+            postAction(*args, **kwargs)
     bpy.app.handlers.load_post.append(deleteCube)
     bpy.ops.wm.read_homefile()
     

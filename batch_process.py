@@ -73,6 +73,7 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
                 "export BLENDER_SYSTEM_SCRIPTS=${WORKSPACE_HOME}/blender_startup:${BLENDER_SYSTEM_SCRIPTS}\n"
             for k, v in args.items():
                 assert isinstance(k,str) and isinstance(v,str)
+                k = k.capitalize()
                 cmd = cmd + f"export BLENDER_ARGS_{k}={v}\n"
             cmd = cmd + f"blender --background --log-level -1 --python {script_path}"
             t=time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time()))
