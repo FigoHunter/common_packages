@@ -138,6 +138,7 @@ SMPL_BODY_JOINT_PARENT={
     'right_hand':'right_wrist',
 }
 
+
 def get_joint_idx(joint_name):
     if joint_name in BODY_JOINT_NAMES:
         return BODY_JOINT_NAMES.index(joint_name)
@@ -244,3 +245,30 @@ def mirror_smpl_pose(smpl_pose):
             # 镜像非对称关节旋转
             mir_body_pose[i*3:(i+1)*3] = torch.tensor(mirror_rot(body_pose[i*3:(i+1)*3]))
     body_pose[:]=mir_body_pose[:]
+
+def add_root(names):
+    names = copy.deepcopy(names)
+    names.insert(0, 'root')
+    return names
+
+
+def get_global_full_pose(smpl_model, smpl_output, pose2rot=False):
+    from smplx import lbs
+    from figo_common.math import transform_tensor
+    pos = smpl_output.joints[:,:24]
+    parents = smpl_model.parents
+    full_pose = smpl_output.full_pose
+    joints_num = full_pose.shape[1]
+    batch_size = full_pose.shape[0]
+    if pose2rot:
+        rot_mats = lbs.batch_rodrigues(full_pose.view(-1, 3)).view(
+            [batch_size, -1, 3, 3])
+    else:
+        rot_mats = full_pose.view(batch_size, -1, 3, 3)
+    transform_chain = [rot_mats[:, 0]]
+    for i in range(1, parents.shape[0]):
+        curr_rot = torch.matmul(transform_chain[parents[i]], rot_mats[:,i])
+        transform_chain.append(curr_rot)
+    rot_mats = torch.stack(transform_chain, dim=1)
+    rot_vecs = transform_tensor.rotmat_to_rotvec(rot_mats)
+    return pos, rot_vecs
