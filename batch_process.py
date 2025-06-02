@@ -21,14 +21,14 @@ def __startProcessThread(q,index):
     while True:
         path = q.get()
         if path == "end":
-            print(f"[THREAD-{index}] Exit On End")
+            print(f"[WORKER-{index}] Exit On End")
             q.task_done()
             break
         if not os.path.exists(path):
-            print(f"THREAD-{index}] Command File Not Found: {path}")
+            print(f"WORKER-{index}] Command File Not Found: {path}")
             q.task_done()
             continue
-        print(f"[THREAD-{index}] Working On: {path}")
+        print(f"[WORKER-{index}] Working On: {path}")
         with open(os.path.splitext(path)[0]+".log","w") as f:
             if platform.system().lower() == 'windows':
                 process = subprocess.Popen(f"{path}", shell=True, stdout=f, stderr=f)
@@ -39,10 +39,10 @@ def __startProcessThread(q,index):
                 raise Exception('系统未支持: '+ platform.system().lower())
             process.wait()
         q.task_done()
-        print(f"[THREAD-{index}] Done")
+        print(f"[WORKER-{index}] Done")
 
 
-def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=1, args={}):
+def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=1, args={}, temp_dir=None):
     index=0
     pid=os.getpid()
     for i in range(process_count):
@@ -69,7 +69,7 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
                 "#!/bin/bash\n"+\
                 f"export PARENT_PID={str(pid)}\n"+\
                 f"export WORKSPACE_HOME={workspace_home}\n"+\
-                "export PYTHONPATH=${PYTHONPATH}:${WORKSPACE_HOME}/packages:${WORKSPACE_HOME}/blender_startup\n"+\
+                "export PYTHONPATH=${PYTHONPATH}:${WORKSPACE_HOME}/packages:${WORKSPACE_HOME}/blender_startup:${BLENDER_PYTHONPATH}\n"+\
                 "export BLENDER_SYSTEM_SCRIPTS=${WORKSPACE_HOME}/blender_startup:${BLENDER_SYSTEM_SCRIPTS}\n"
             for k, v in args.items():
                 assert isinstance(k,str) and isinstance(v,str)
@@ -77,7 +77,10 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
                 cmd = cmd + f"export BLENDER_ARGS_{k}={v}\n"
             cmd = cmd + f"blender --background --log-level -1 --python {script_path}"
             t=time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time()))
-            tempFile=os.path.join(workspace_home,"temp",f"{t}---{index}.sh")
+            if temp_dir:
+                tempFile=os.path.join(temp_dir,f"{t}---{index}.sh")
+            else:
+                tempFile=os.path.join(workspace_home,"temp",f"{t}---{index}.sh")
         else:
             raise Exception('系统未支持: '+ platform.system().lower())
         file.createTmpFile(tempFile, content=cmd)

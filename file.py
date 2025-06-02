@@ -61,9 +61,11 @@ def openFile(filePath, postAction=None):
     bpy.app.handlers.load_post.append(__postAction)
     bpy.ops.wm.open_mainfile(filepath=filePath)
 
-def saveFile(filePath=None):
+def saveFile(filePath=None, overwrite=True):
     import bpy
     import os
+    if overwrite and os.path.exists(filePath):
+        os.remove(filePath)
     if filePath is None:
         bpy.ops.wm.save_mainfile()
     else:
