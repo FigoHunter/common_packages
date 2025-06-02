@@ -332,17 +332,25 @@ def quat_to_rotvec(quat: torch.Tensor) -> torch.Tensor:
             turned anticlockwise in radians around the vector's
             direction.
     """
-    quat = quat / (torch.norm(quat, p=2, dim=-1, keepdim=True) + 1e-8)
-    w = quat[..., 0:1]  # (..., 1)
-    xyz = quat[..., 1:]  # (..., 3)
-    theta = 2.0 * torch.acos(w.clamp(-1.0, 1.0))  # (..., 1)
-    sin_theta_over2 = torch.sqrt(1.0 - w**2 + 1e-8)  # (..., 1)
     eps = 1e-8
-    sin_theta_over2 = torch.where(sin_theta_over2 < eps, torch.ones_like(sin_theta_over2), sin_theta_over2)
-    axis = xyz / sin_theta_over2  # (..., 3)
-    axis = torch.where(sin_theta_over2 > eps, axis, torch.zeros_like(axis))
-    rotvec = axis * theta  # (..., 3)
-    rotvec = torch.where(theta > eps, rotvec, torch.zeros_like(rotvec))
+    norm_q = quat.norm(p=2, dim=-1, keepdim=True).clamp_min(eps)
+    quat = quat / norm_q
+    w = quat[..., :1]   # (...,1)
+    xyz = quat[..., 1:] # (...,3)
+    rotvec = torch.zeros_like(xyz)
+    w_clamped = w.clamp(-1.0, 1.0)  # (...,1)
+    close_mask = (1.0 - w_clamped.abs()) < eps   # (...,1) bool
+    non_close_mask = ~close_mask
+    if non_close_mask.any():
+        w_nonclose = w_clamped[non_close_mask]  # shape [X]
+        non_close_mask = non_close_mask.squeeze(-1)
+        xyz_nonclose = xyz[non_close_mask]  # shape [X,3]
+        theta_nonclose = 2.0 * torch.acos(w_nonclose)  # shape [X]
+        sin_half = torch.sqrt((1.0 - w_nonclose**2).clamp_min(0.0))
+        axis_nonclose = xyz_nonclose / (sin_half.unsqueeze(-1) + eps)  # [X,3]
+        rotvec_nonclose = axis_nonclose * theta_nonclose.unsqueeze(-1)
+        rotvec[non_close_mask] = rotvec_nonclose
+
     return rotvec
 
 def _axis_angle_rotation(axis: str, angle: torch.Tensor) -> torch.Tensor:

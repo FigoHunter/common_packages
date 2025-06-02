@@ -4,6 +4,10 @@ def normalize(vector):
     norm = np.linalg.norm(vector)
     return vector/norm
 
+def clamp_mag(vector, mag=1):
+    norm = np.linalg.norm(vector)
+    return vector * (mag/norm) if norm > mag else vector
+
 def getAffineVector(vector:np.ndarray):
     return np.insert(vector, len(vector),1)
 

@@ -48,3 +48,7 @@ def require(var, msg = None):
     if var is None:
         raise Exception(msg or 'Variable is required but not provided.')
     return var
+
+class RefWrapper:
+    def __init__(self, value):
+        self.value = value
