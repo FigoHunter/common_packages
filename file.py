@@ -43,3 +43,11 @@ def extract_file_key(filename):
 def sort_file_list(files: list, reverse=False):
     files.sort(key=extract_file_key, reverse=reverse)
     return files
+
+def get_temp_dir(path, create=False):
+    if os.path.isfile(path):
+        path = os.path.dirname(path)
+    temp_path = os.path.join(path, 'temp')
+    if create:
+        os.makedirs(temp_path, exist_ok=True)
+    return temp_path
