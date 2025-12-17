@@ -31,7 +31,7 @@ _FPS_TO_UNIT = {
 }
 
 def set_fps(fps: Literal[24,25,30,50,60,100,120]) -> None:
-    unit = _FPS_TO_UNIT[fps]
+    unit = _FPS_TO_UNIT.get(fps, f'{fps}fps')
     if pm.currentUnit(q=True, time=True) != unit:
         pm.currentUnit(time=unit)
     end = end_frame()
