@@ -271,4 +271,47 @@ def get_global_full_pose(smpl_model, smpl_output, pose2rot=False):
         transform_chain.append(curr_rot)
     rot_mats = torch.stack(transform_chain, dim=1)
     rot_vecs = transform_tensor.rotmat_to_rotvec(rot_mats)
+    rot_vecs = rot_vecs[:, :24]
     return pos, rot_vecs
+
+
+def get_global_full_pose_select(smpl_model, smpl_output, pose2rot=False, joint_count: int = 24, joint_indices=None):
+    from smplx import lbs
+    from figo_common.math import transform_tensor
+    # Select positions: default first 24 (SMPL body), or custom
+    if joint_indices is not None:
+        pos = smpl_output.joints[:, joint_indices]
+    else:
+        pos = smpl_output.joints[:, :joint_count]
+    parents = smpl_model.parents
+    full_pose = smpl_output.full_pose
+    joints_num = full_pose.shape[1]
+    batch_size = full_pose.shape[0]
+    if pose2rot:
+        rot_mats = lbs.batch_rodrigues(full_pose.view(-1, 3)).view(
+            [batch_size, -1, 3, 3])
+    else:
+        rot_mats = full_pose.view(batch_size, -1, 3, 3)
+    transform_chain = [rot_mats[:, 0]]
+    for i in range(1, parents.shape[0]):
+        curr_rot = torch.matmul(transform_chain[parents[i]], rot_mats[:,i])
+        transform_chain.append(curr_rot)
+    rot_mats = torch.stack(transform_chain, dim=1)
+    rot_vecs = transform_tensor.rotmat_to_rotvec(rot_mats)
+    # Return rotations for the same joint selection as pos
+    if joint_indices is not None:
+        rot_vecs = rot_vecs[:, joint_indices]
+    else:
+        rot_vecs = rot_vecs[:, :joint_count]
+    return pos, rot_vecs
+
+
+def get_global_full_pose_all(smpl_model, smpl_output, pose2rot=False):
+    """Convenience: return global pos/rots for all joints without extra args."""
+    total = int(smpl_output.joints.shape[1])
+    return get_global_full_pose_select(smpl_model, smpl_output, pose2rot=pose2rot, joint_count=total)
+
+
+def get_global_full_pose_indices(smpl_model, smpl_output, indices, pose2rot=False):
+    """Convenience: select by indices only, no joint_count arg."""
+    return get_global_full_pose_select(smpl_model, smpl_output, pose2rot=pose2rot, joint_indices=indices)
