@@ -78,9 +78,9 @@ def batchProcess(workspace_home, script, file_list, batch_size=1, process_count=
             cmd = cmd + f"blender --background --log-level -1 --python {script_path}"
             t=time.strftime("%Y-%m-%d-%H_%M_%S",time.localtime(time.time()))
             if temp_dir:
-                tempFile=os.path.join(temp_dir,f"{t}---{index}.sh")
+                tempFile=os.path.join(temp_dir,t,f"{index}.sh")
             else:
-                tempFile=os.path.join(workspace_home,"temp",f"{t}---{index}.sh")
+                tempFile=os.path.join(workspace_home,"temp",t,f"{index}.sh")
         else:
             raise Exception('系统未支持: '+ platform.system().lower())
         file.createTmpFile(tempFile, content=cmd)
@@ -133,3 +133,6 @@ def startSelfSupervising():
     ppid = int(ppid)
     t=threading.Thread(None,__checkParentProcess,"CheckParentProcess",(ppid,),daemon=True)
     t.start()
+
+def isBatchProcess():
+    return os.environ.get("PARENT_PID") is not None
